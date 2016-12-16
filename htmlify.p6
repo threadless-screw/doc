@@ -15,11 +15,7 @@ for @pod-sources.kv -> $num, $file {
     push @pod-files, start {
         my $ffile = $file.IO;
         my $id = ~ ($num + 100);
-        my $handle = $precomp.load($id, :since($ffile.modified))[0];
-
-        if not $handle {
-            $precomp.precompile($ffile, $id, :force);
-        }
+        $precomp.precompile($ffile, $id, :force);
     }
 
     if $num %% 3 {
