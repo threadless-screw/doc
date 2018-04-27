@@ -161,19 +161,19 @@ sub MAIN(
     say 'Composing doc registry ...';
     $*DR.compose;
 
-    for $*DR.lookup("programs", :by<kind>).list -> $doc {
+    for $*DR.lookup("programs").list -> $doc {
         say "Writing programs document for {$doc.name} ...";
         my $pod-path = pod-path-from-url($doc.url);
         spurt "html{$doc.url}.html",
             p2h($doc.pod, 'programs', pod-path => $pod-path);
     }
-    for $*DR.lookup("language", :by<kind>).list -> $doc {
+    for $*DR.lookup("language").list -> $doc {
         say "Writing language document for {$doc.name} ...";
         my $pod-path = pod-path-from-url($doc.url);
         spurt "html{$doc.url}.html",
             p2h($doc.pod, 'language', pod-path => $pod-path);
     }
-    for $*DR.lookup("type", :by<kind>).list {
+    for $*DR.lookup("type").list {
         write-type-source $_;
     }
 
@@ -719,7 +719,7 @@ sub write-search-file() {
         $s.trans([</ \\ ">] => [<\\/ \\\\ \\">]);
     }
     my @items = $*DR.get-kinds.map(-> $kind {
-        $*DR.lookup($kind, :by<kind>).categorize({escape .name.gist})\
+        $*DR.lookup($kind).categorize({escape .name.gist})\
             .pairs.sort({.key}).map: -> (:key($name), :value(@docs)) {
                 qq[[\{ category: "{
                     ( @docs > 1 ?? $kind !! @docs.[0].subkinds[0] ).wordcase
@@ -801,7 +801,7 @@ sub write-index-files() {
     say 'Writing html/programs.html ...';
     spurt 'html/programs.html', p2h(pod-with-title(
         'Perl 6 Programs Documentation',
-        pod-table($*DR.lookup('programs', :by<kind>).map({[
+        pod-table($*DR.lookup('programs').map({[
             pod-link(.name, .url),
             .summary
         ]}))
@@ -812,7 +812,7 @@ sub write-index-files() {
     spurt 'html/language.html', p2h(pod-with-title(
         'Perl 6 Language Documentation',
         pod-block("Tutorials, general reference, migration guides and meta pages for the Perl 6 language."),
-        pod-table($*DR.lookup('language', :by<kind>).map({[
+        pod-table($*DR.lookup('language').map({[
             pod-link(.name, .url),
             .summary
         ]}))
@@ -855,7 +855,7 @@ sub write-main-index(:$kind, :&summary = {Nil}) {
         pod-table(
             :headers[<Name  Declarator  Source>],
             [
-                $*DR.lookup($kind, :by<kind>)\
+                $*DR.lookup($kind)\
                 .categorize(*.name).sort(*.key)>>.value
                 .map({[
                     pod-link(.[0].name, .[0].url),
@@ -873,7 +873,7 @@ sub write-sub-index(:$kind, :$category, :&summary = {Nil}) {
     my $this-category = $category.tc eq "Exceptions" ?? "Exception" !! $category.tc;
     spurt "html/$kind-$category.html", p2h(pod-with-title(
         "Perl 6 {$this-category} {$kind.tc}s",
-        pod-table($*DR.lookup($kind, :by<kind>)\
+        pod-table($*DR.lookup($kind)\
             .grep({$category ⊆ .categories})\ # XXX
             .categorize(*.name).sort(*.key)>>.value
             .map({[
@@ -887,7 +887,7 @@ sub write-sub-index(:$kind, :$category, :&summary = {Nil}) {
 
 sub write-kind($kind) {
     say "Writing per-$kind files ...";
-    $*DR.lookup($kind, :by<kind>)
+    $*DR.lookup($kind)
         .categorize({.name})
         .kv.map: -> $name, @docs {
             CATCH {
