@@ -11,11 +11,14 @@ SELINUX_OPT          := $(shell [ $(DOCKER_SELINUX_LABEL) -eq 1 ] && echo "$(COL
 	clean-search clean test-links push \
 	docker-image docker-htmlify docker-test docker-xtest docker-ctest docker-testall docker-run
 
-gen-pod6-source:
-	perl6 manage-page-order.p6 update
+# Keep a placeholder here but only for the html build itself.
+# Anything else is just moved to the Sakefile
 
 html: assets gen-pod6-source
 	sake html
+
+gen-pod6-source:
+	perl6 manage-page-order.p6 update
 
 html-nohighlight:
 	perl6 htmlify.p6 --no-highlight
