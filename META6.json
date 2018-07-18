@@ -18,6 +18,7 @@
     "OO::Monitors",
     "File::Find",
     "Test::META",
+    "Term::ProgressBar",
     "Sake"
   ],
   "tags": [
