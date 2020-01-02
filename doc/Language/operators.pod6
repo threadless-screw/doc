@@ -8,11 +8,34 @@ See L<creating operators|/language/optut> on how to define new operators.
 
 =head1 Operator precedence
 
-In an expression like C<1 + 2 * 3>, the C<2 * 3> is evaluated first
-because the infix C<*> has tighter B<precedence> than the C<+>.
+The precedence and associativity of Raku operators determine the grouping and
+evaluation of operands in expressions.
 
-The following table summarizes the precedence levels in Raku, from
-tightest to loosest:
+Where two operators with a different precedence act on the same operand, the
+subexpression involving the higher-precedence operator is evaluated first. For
+instance, in the expression C<1 + 2 * 3>, both the binary C<+> operator for
+addition and the binary C<*> operator for multiplication act on the operand
+C<2>. Because the C<*> operator has a higher precedence than the C<+> operator,
+the subexpression C<2 * 3> will be evaluated first. Consequently, the resulting
+value of the overall expression is C<7> and not C<9>.
+
+Instead of "precedence" one can also speak of "binding": operators with a
+higher precedence are then said to have a tighter binding to the operand(s) in
+question, while operators with a lower precedence are said to have a looser
+binding.
+
+Where two operators with a same precedence level act on an operand, the
+associativity of the operators determines which subexpression/operator is
+evaluated first. For instance, in the expression C<100 / 2 * 10>, the binary
+division operator C</> and the binary multiplication operator C<*> have equal
+precedence, so that the grouping of the operands is determined by their
+associativity. As the two operators are I<left associative>, the operands are
+grouped from the left like this: C<(100 / 2) * 10>. The expression thus
+evaluates to C<500>, rather than to C<5>.
+
+The following table summarizes the associativities (column labeled C<A>) and
+precedence levels (column labeled C<Level>) of Raku operators, listing them in
+order from high to low precedence:
 
 =begin table
 
@@ -48,9 +71,11 @@ tightest to loosest:
 
 =end table
 
-Using two C<!> symbols below generically to represent any pair of operators
-that have the same precedence, the associativities specified above
-for binary operators are interpreted as follows:
+The following table further clarifies the meaning of the associativity symbols
+(C<L R N C X>) specified above in column C<A>, and uses a generic C<!> operator
+symbol representing a binary operator to illustrate how the associativities
+affect the interpretation of an expression involving two binary operators of
+equal precedence:
 
 =begin table
 
@@ -64,7 +89,8 @@ for binary operators are interpreted as follows:
 
 =end table
 
-For unary operators this is interpreted as:
+For unary operators generically represented by a C<!> symbol the
+associativites C<L R N> lead to the following interpretations:
 
 =begin table
 
@@ -223,6 +249,54 @@ value untouched and instead returns the resultant string.
 
 =head1 Assignment operators
 
+Raku has a variety of assignment operators, which can be roughly classified as
+simple assignment operators and compound assignment operators.
+
+The simple assignment operator symbol is C<=>. It is 'overloaded' since it can
+mean either L<item assignment|> or L<list assignment|> depending on the context
+in which it is used. The compound assignment operators are L<metaoperators|>:
+they combine the simple assignment operator C<=> with an infix operator to form
+a new operator that performs the operation specified by the infix operator
+before assigning the result to the left operand.
+
+One thing the simple and compound assignment operators have in common is that,
+in so-called I<assignment expressions>, they return the assigned value:
+
+    my ($i, $j) = (0,0);
+    repeat { say $i } while ($j = $i++) < 10; # ($j = $i++) returns value of $i
+    say "$j $i";                              # OUTPUT: «10 11» 
+
+But there is also a notable difference: the following two assignments are not
+equivalent because the compound assignment expression evaluates expression1 only
+once, while the expanded simple assignment version evaluates expression1 twice:
+
+    expression1 += expression2;
+    expression1  = expression1 + expression2;
+
+So, in the following code, the two assignment statements are not identical:
+
+    my @arr;
+    my $j=0;
+
+    if rand < 0.5 {
+      @arr[++$j] += 10;                 # @arr = [ (Any) 10 ]
+    } else {
+      @arr[++$j]  = @arr[++$j] + 10;    # Error!
+    }
+
+The above example also illustrates a particularity of the compound assignment
+operators C<+=>, C<-=> and C<**=>: they allow the left operand to be
+uninitialized (i.e. undefined). For C<+=> and C<->, the left operand will
+effectively be initialized with the value C<0>; the C<**=> with the value C<1>.
+
+
+
+
+https://stackoverflow.com/questions/57210795/math-with-undefined-perl6-values
+https://github.com/Raku/doc/issues/2920
+
+
+
 Infix operators can be combined with the assignment operator to modify a
 value and apply the result to a container in one go. Containers will be
 autovivified if possible. Some examples:
@@ -249,6 +323,17 @@ Although not strictly operators, methods can be used in the same fashion.
     my Real $a = 1/2;
     $a = 3.14;
     $a .= round;      # RESULT: «3»
+
+
+
+
+
+
+
+
+
+
+
 
 =head1 Negated relational operators
 X<|! (negation metaoperator)>X<|!==>X<|!eq>
